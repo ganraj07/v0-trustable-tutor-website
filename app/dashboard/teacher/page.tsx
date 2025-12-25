@@ -36,9 +36,9 @@ export default function TeacherDashboard() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [todayClasses, setTodayClasses] = useState([
-    { subject: "Mathematics - Grade 5", time: "9:00 AM", students: 28, status: "upcoming", color: "bg-primary" },
-    { subject: "Science - Grade 6", time: "10:30 AM", students: 32, status: "upcoming", color: "bg-secondary" },
-    { subject: "Mathematics - Grade 4", time: "1:00 PM", students: 25, status: "upcoming", color: "bg-accent" },
+    { id: 1, subject: "Mathematics - Grade 5", time: "9:00 AM", students: 28, status: "upcoming", color: "bg-primary" },
+    { id: 2, subject: "Science - Grade 6", time: "10:30 AM", students: 32, status: "upcoming", color: "bg-secondary" },
+    { id: 3, subject: "Mathematics - Grade 4", time: "1:00 PM", students: 25, status: "upcoming", color: "bg-accent" },
   ])
   const [studentRequests, setStudentRequests] = useState([
     {
@@ -71,37 +71,12 @@ export default function TeacherDashboard() {
   ])
   const [classStats, setClassStats] = useState([
     { label: "Total Students", value: "156", icon: "students", color: "bg-primary/10 text-primary" },
-    { label: "Classes Today", value: "4", icon: "classes", color: "bg-secondary/10 text-secondary" },
+    { label: "Classes Today", value: "3", icon: "classes", color: "bg-secondary/10 text-secondary" },
     { label: "Avg. Attendance", value: "94%", icon: "attendance", color: "bg-accent/10 text-accent" },
     { label: "Materials Shared", value: "48", icon: "materials", color: "bg-chart-5/20 text-chart-5" },
   ])
 
   useEffect(() => {
-    if (user && user.role === "teacher") {
-      setTodayClasses([
-        {
-          subject: `${user.subjects[0]?.replace("_", " ") || "Mathematics"} - Grade 5`,
-          time: "9:00 AM",
-          students: 28,
-          status: "upcoming",
-          color: "bg-primary",
-        },
-        {
-          subject: `${user.subjects[0]?.replace("_", " ") || "Science"} - Grade 6`,
-          time: "10:30 AM",
-          students: 32,
-          status: "upcoming",
-          color: "bg-secondary",
-        },
-        {
-          subject: `${user.subjects[1]?.replace("_", " ") || "Mathematics"} - Grade 4`,
-          time: "1:00 PM",
-          students: 25,
-          status: "upcoming",
-          color: "bg-accent",
-        },
-      ])
-    }
     if (!user || user.role !== "teacher") {
       router.push("/login?role=teacher")
     }
@@ -115,7 +90,7 @@ export default function TeacherDashboard() {
     )
   }
 
-  const teacherUser = user
+  const teacherUser = user as any
 
   const handleResolveRequest = (id: number) => {
     setStudentRequests((prev) => prev.map((req) => (req.id === id ? { ...req, resolved: true } : req)))
@@ -123,9 +98,15 @@ export default function TeacherDashboard() {
 
   const handleFileUpload = () => {
     if (selectedFile) {
-      // Simulate upload
       setUploadDialogOpen(false)
       setSelectedFile(null)
+    }
+  }
+
+  const handleStartClass = (classId: number) => {
+    const selectedClass = todayClasses.find((c) => c.id === classId)
+    if (selectedClass) {
+      router.push(`/dashboard/teacher/class/${classId}`)
     }
   }
 
@@ -336,9 +317,9 @@ export default function TeacherDashboard() {
                 </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {todayClasses.map((cls, index) => (
+                {todayClasses.map((cls) => (
                   <div
-                    key={index}
+                    key={cls.id}
                     className="flex items-center gap-4 p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
                   >
                     <div
@@ -352,7 +333,11 @@ export default function TeacherDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-foreground">{cls.time}</p>
-                      <Button size="sm" className="mt-1 bg-secondary hover:bg-secondary/90">
+                      <Button
+                        size="sm"
+                        className="mt-1 bg-secondary hover:bg-secondary/90"
+                        onClick={() => handleStartClass(cls.id)}
+                      >
                         Start Class
                       </Button>
                     </div>
@@ -419,7 +404,7 @@ export default function TeacherDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid sm:grid-cols-3 gap-6">
-                {teacherUser.grades.slice(0, 3).map((grade, index) => (
+                {teacherUser.grades?.slice(0, 3).map((grade: string, index: number) => (
                   <div key={grade}>
                     <div className="flex justify-between mb-2">
                       <span className="text-sm font-medium capitalize">{grade.replace("-", " ")}</span>

@@ -22,6 +22,8 @@ import {
   StarIcon,
 } from "@/components/icons"
 import { AIChatbot } from "@/components/ai-chatbot"
+import { LearningCompanion } from "@/components/learning-companion"
+import { EmotionDetection } from "@/components/emotion-detection"
 
 export default function StudentDashboard() {
   const router = useRouter()
@@ -102,6 +104,21 @@ export default function StudentDashboard() {
     { title: "Quiz Champion", description: "Scored 100% on Math Quiz", emoji: "trophy" },
     { title: "Note Taker", description: "Created 10 study notes", emoji: "note" },
     { title: "Active Learner", description: "7-day learning streak", emoji: "fire" },
+  ]
+
+  const games = [
+    {
+      title: "Emotion Quest",
+      description: "Learn to recognize and manage emotions",
+      emoji: "🎭",
+      href: "/games/emotion-quest",
+    },
+    {
+      title: "Sound Map Explorer",
+      description: "Audio adventure for all learners",
+      emoji: "🎵",
+      href: "/games/sound-map-explorer",
+    },
   ]
 
   const getGreeting = () => {
@@ -192,7 +209,7 @@ export default function StudentDashboard() {
         <aside
           className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-card border-r border-border transform transition-transform lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
-          <div className="p-4 pt-20 lg:pt-4 space-y-2">
+          <div className="p-4 pt-20 lg:pt-4 space-y-2 overflow-y-auto max-h-[calc(100vh-60px)]">
             <div className="p-4 bg-primary/10 rounded-xl mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
@@ -217,6 +234,13 @@ export default function StudentDashboard() {
                 Dashboard
               </Link>
               <Link
+                href="/dashboard/student/gamification"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <StarIcon className="w-5 h-5" />
+                Progress & Badges
+              </Link>
+              <Link
                 href="/dashboard/student/classes"
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted transition-colors"
               >
@@ -231,11 +255,11 @@ export default function StudentDashboard() {
                 Notes & Materials
               </Link>
               <Link
-                href="/dashboard/student/achievements"
+                href="/parent-portal"
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted transition-colors"
               >
-                <StarIcon className="w-5 h-5" />
-                Achievements
+                <span>👨‍👩‍👧</span>
+                Parent Portal
               </Link>
             </nav>
 
@@ -267,13 +291,18 @@ export default function StudentDashboard() {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8">
+        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
           {/* Welcome Section */}
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
               {getGreeting()}, {studentUser.name.split(" ")[0]}!
             </h1>
             <p className="text-muted-foreground">Ready for another awesome day of learning?</p>
+          </div>
+
+          {/* Emotion Detection Widget */}
+          <div className="mb-8">
+            <EmotionDetection />
           </div>
 
           {/* Accessibility Quick Toggles */}
@@ -405,8 +434,38 @@ export default function StudentDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Games Section */}
+          <div className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-xl">Educational Games</span>
+                </CardTitle>
+                <CardDescription>Fun and interactive learning games</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {games.map((game, index) => (
+                    <Link key={index} href={game.href}>
+                      <Card className="hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer h-full">
+                        <CardContent className="p-6 flex flex-col items-center text-center">
+                          <div className="text-4xl mb-3">{game.emoji}</div>
+                          <p className="font-bold text-foreground mb-1">{game.title}</p>
+                          <p className="text-sm text-muted-foreground">{game.description}</p>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </main>
       </div>
+
+      {/* Learning Companion */}
+      <LearningCompanion />
 
       {/* AI Chatbot */}
       <AIChatbot />

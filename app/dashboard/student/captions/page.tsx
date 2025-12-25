@@ -10,17 +10,53 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useUser } from "@/lib/user-context"
 import { CaptionsIcon } from "@/components/icons"
-import SpeechRecognition from "speech-recognition"
+
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number
+  results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string
+}
+
+interface SpeechRecognitionResult {
+  [index: number]: SpeechRecognitionAlternative
+  length: number
+  isFinal: boolean
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string
+  confidence: number
+}
+
+type SpeechRecognitionResultList = SpeechRecognitionResult[]
+
+interface SpeechRecognitionAPI {
+  new (): SpeechRecognitionAPI
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  onresult: (event: SpeechRecognitionEvent) => void
+  onerror: (event: SpeechRecognitionErrorEvent) => void
+  onend: () => void
+  start: () => void
+  stop: () => void
+  abort: () => void
+}
 
 export default function LiveCaptionsPage() {
   const router = useRouter()
-  const { user, updateAccessibilityPreferences } = useUser()
+  const { user } = useUser()
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState<string[]>([])
   const [currentText, setCurrentText] = useState("")
   const [fontSize, setFontSize] = useState(18)
   const [showTimestamp, setShowTimestamp] = useState(true)
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const [isSupported, setIsSupported] = useState(false)
+  const [error, setError] = useState<string>("")
+  const recognitionRef = useRef<any>(null)
 
   useEffect(() => {
     if (!user || user.role !== "student") {
@@ -29,60 +65,102 @@ export default function LiveCaptionsPage() {
   }, [user, router])
 
   useEffect(() => {
-    // Initialize speech recognition
-    if (typeof window !== "undefined" && SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition()
-      recognitionRef.current.continuous = true
-      recognitionRef.current.interimResults = true
-      recognitionRef.current.lang = "en-US"
+    if (typeof window === "undefined") return
 
-      recognitionRef.current.onresult = (event) => {
-        let interimTranscript = ""
-        let finalTranscript = ""
+    try {
+      const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript
-          } else {
-            interimTranscript += transcript
+      if (SpeechRecognitionAPI) {
+        setIsSupported(true)
+        recognitionRef.current = new SpeechRecognitionAPI()
+        recognitionRef.current.continuous = true
+        recognitionRef.current.interimResults = true
+        recognitionRef.current.lang = "en-US"
+
+        recognitionRef.current.onstart = () => {
+          console.log("[v0] Speech recognition started")
+          setError("")
+        }
+
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+          let interimTranscript = ""
+          let finalTranscript = ""
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + " "
+            } else {
+              interimTranscript += transcript
+            }
+          }
+
+          setCurrentText(interimTranscript || finalTranscript)
+
+          if (finalTranscript.trim()) {
+            const timestamp = new Date().toLocaleTimeString()
+            setTranscript((prev) => [...prev, `[${timestamp}] ${finalTranscript.trim()}`])
+            setCurrentText("")
           }
         }
 
-        setCurrentText(interimTranscript)
-        if (finalTranscript) {
-          const timestamp = new Date().toLocaleTimeString()
-          setTranscript((prev) => [...prev, `[${timestamp}] ${finalTranscript}`])
-          setCurrentText("")
+        recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+          console.error("[v0] Speech recognition error:", event.error)
+          if (event.error !== "no-speech") {
+            setError(`Error: ${event.error}. Please check your microphone.`)
+          }
         }
-      }
 
-      recognitionRef.current.onerror = (event) => {
-        console.error("Speech recognition error:", event.error)
-        setIsListening(false)
-      }
-
-      recognitionRef.current.onend = () => {
-        if (isListening) {
-          recognitionRef.current?.start()
+        recognitionRef.current.onend = () => {
+          if (isListening) {
+            try {
+              recognitionRef.current?.start()
+            } catch (e) {
+              console.log("[v0] Auto-restart failed, user may have stopped")
+            }
+          }
         }
+      } else {
+        setIsSupported(false)
+        setError("Speech Recognition is not supported in your browser. Please use Chrome, Edge, or Safari.")
       }
+    } catch (err) {
+      console.error("[v0] Error initializing speech recognition:", err)
+      setError("Failed to initialize speech recognition")
     }
 
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.stop()
+        try {
+          recognitionRef.current.abort()
+        } catch (e) {
+          console.log("[v0] Error aborting recognition")
+        }
       }
     }
   }, [isListening])
 
   const toggleListening = () => {
+    if (!isSupported || !recognitionRef.current) return
+
     if (isListening) {
-      recognitionRef.current?.stop()
-      setIsListening(false)
+      try {
+        recognitionRef.current.stop()
+        setIsListening(false)
+      } catch (err) {
+        console.error("[v0] Error stopping recognition:", err)
+      }
     } else {
-      recognitionRef.current?.start()
-      setIsListening(true)
+      try {
+        setTranscript([])
+        setCurrentText("")
+        setError("")
+        recognitionRef.current.start()
+        setIsListening(true)
+      } catch (err) {
+        console.error("[v0] Error starting recognition:", err)
+        setError("Failed to start speech recognition. Please check your microphone permissions.")
+      }
     }
   }
 
@@ -97,7 +175,6 @@ export default function LiveCaptionsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-card border-b border-border">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-4">
@@ -112,7 +189,9 @@ export default function LiveCaptionsPage() {
             </div>
           </div>
           <div
-            className={`px-3 py-1 rounded-full text-sm font-medium ${isListening ? "bg-green-500/20 text-green-500" : "bg-muted text-muted-foreground"}`}
+            className={`px-3 py-1 rounded-full text-sm font-medium ${
+              isListening ? "bg-green-500/20 text-green-500" : "bg-muted text-muted-foreground"
+            }`}
           >
             {isListening ? "Listening..." : "Paused"}
           </div>
@@ -121,7 +200,14 @@ export default function LiveCaptionsPage() {
 
       <main className="p-4 lg:p-8 max-w-4xl mx-auto">
         <div className="grid gap-6">
-          {/* Caption Display */}
+          {error && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="pt-6">
+                <p className="text-red-700 text-sm">{error}</p>
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="min-h-[400px]">
             <CardHeader>
               <CardTitle>Real-time Speech to Text</CardTitle>
@@ -134,7 +220,9 @@ export default function LiveCaptionsPage() {
               >
                 {transcript.length === 0 && !currentText && (
                   <p className="text-muted-foreground text-center py-8">
-                    Click "Start Listening" to begin capturing speech...
+                    {isSupported
+                      ? 'Click "Start Listening" to begin capturing speech...'
+                      : "Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari."}
                   </p>
                 )}
                 {transcript.map((text, index) => (
@@ -147,7 +235,6 @@ export default function LiveCaptionsPage() {
             </CardContent>
           </Card>
 
-          {/* Controls */}
           <div className="grid sm:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -157,7 +244,10 @@ export default function LiveCaptionsPage() {
                 <div className="flex gap-3">
                   <Button
                     onClick={toggleListening}
-                    className={`flex-1 ${isListening ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
+                    disabled={!isSupported}
+                    className={`flex-1 ${
+                      isListening ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"
+                    }`}
                   >
                     {isListening ? "Stop Listening" : "Start Listening"}
                   </Button>
@@ -166,7 +256,7 @@ export default function LiveCaptionsPage() {
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {recognitionRef.current
+                  {isSupported
                     ? "Speech recognition is available"
                     : "Speech recognition is not supported in this browser"}
                 </p>
