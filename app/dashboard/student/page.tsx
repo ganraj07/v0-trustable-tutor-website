@@ -261,6 +261,20 @@ export default function StudentDashboard() {
                 <span>👨‍👩‍👧</span>
                 Parent Portal
               </Link>
+              <Link
+                href="/ngo-directory"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <span>🏢</span>
+                NGO Directory
+              </Link>
+              <Link
+                href="/marketplace"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <span>🛍️</span>
+                Marketplace
+              </Link>
             </nav>
 
             <div className="pt-4">
@@ -457,6 +471,44 @@ export default function StudentDashboard() {
                       </Card>
                     </Link>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Community Resources Section */}
+          <div className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-xl">Community & Resources</span>
+                </CardTitle>
+                <CardDescription>Connect with NGOs and find accessibility products</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Link href="/ngo-directory">
+                    <Card className="hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer h-full border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
+                      <CardContent className="p-6 flex flex-col items-center text-center">
+                        <div className="text-5xl mb-3">🏢</div>
+                        <p className="font-bold text-foreground mb-1">NGO Directory</p>
+                        <p className="text-sm text-muted-foreground">
+                          Connect with NGOs across India supporting students with disabilities
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                  <Link href="/marketplace">
+                    <Card className="hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer h-full border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100">
+                      <CardContent className="p-6 flex flex-col items-center text-center">
+                        <div className="text-5xl mb-3">🛍️</div>
+                        <p className="font-bold text-foreground mb-1">Accessibility Marketplace</p>
+                        <p className="text-sm text-muted-foreground">
+                          Buy and sell disability-related products and services
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

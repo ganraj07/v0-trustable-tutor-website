@@ -104,10 +104,7 @@ export default function TeacherDashboard() {
   }
 
   const handleStartClass = (classId: number) => {
-    const selectedClass = todayClasses.find((c) => c.id === classId)
-    if (selectedClass) {
-      router.push(`/dashboard/teacher/class/${classId}`)
-    }
+    router.push(`/dashboard/teacher/classes/${classId}`)
   }
 
   const getGreeting = () => {
@@ -328,14 +325,19 @@ export default function TeacherDashboard() {
                       {cls.subject.charAt(0)}
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-foreground capitalize">{cls.subject}</p>
-                      <p className="text-sm text-muted-foreground">{cls.students} students enrolled</p>
+                      <p className="font-semibold text-foreground">{cls.subject}</p>
+                      <p className="text-sm text-muted-foreground">{cls.time}</p>
+                      <p className="text-sm text-muted-foreground">{cls.students} students</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-foreground">{cls.time}</p>
+                      <p
+                        className={`text-sm font-medium capitalize px-2 py-1 rounded-full ${cls.status === "upcoming" ? "bg-yellow-500/20 text-yellow-700" : "bg-green-500/20 text-green-700"}`}
+                      >
+                        {cls.status}
+                      </p>
                       <Button
                         size="sm"
-                        className="mt-1 bg-secondary hover:bg-secondary/90"
+                        className="mt-2 bg-secondary hover:bg-secondary/90"
                         onClick={() => handleStartClass(cls.id)}
                       >
                         Start Class

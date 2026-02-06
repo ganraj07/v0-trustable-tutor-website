@@ -56,7 +56,10 @@ export default function LiveCaptionsPage() {
   const [showTimestamp, setShowTimestamp] = useState(true)
   const [isSupported, setIsSupported] = useState(false)
   const [error, setError] = useState<string>("")
+  const [permissionStatus, setPermissionStatus] = useState<"granted" | "denied" | "prompt" | "unknown">("unknown")
   const recognitionRef = useRef<any>(null)
+  const [demoMode, setDemoMode] = useState(false)
+  const demoRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (!user || user.role !== "student") {
@@ -66,6 +69,17 @@ export default function LiveCaptionsPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return
+
+    const checkPermissions = async () => {
+      try {
+        const result = await navigator.permissions.query({ name: "microphone" as PermissionName })
+        setPermissionStatus(result.state as "granted" | "denied" | "prompt")
+      } catch (err) {
+        setPermissionStatus("unknown")
+      }
+    }
+
+    checkPermissions()
 
     try {
       const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -78,8 +92,8 @@ export default function LiveCaptionsPage() {
         recognitionRef.current.lang = "en-US"
 
         recognitionRef.current.onstart = () => {
-          console.log("[v0] Speech recognition started")
           setError("")
+          setDemoMode(false)
         }
 
         recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
@@ -105,19 +119,21 @@ export default function LiveCaptionsPage() {
         }
 
         recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-          console.error("[v0] Speech recognition error:", event.error)
-          if (event.error !== "no-speech") {
+          if (event.error === "not-allowed" || event.error === "permission-denied") {
+            setError(
+              "Microphone access denied. Your browser may require permission. Please allow microphone access in browser settings, or use Demo Mode to see how captions work.",
+            )
+            setPermissionStatus("denied")
+          } else if (event.error !== "no-speech") {
             setError(`Error: ${event.error}. Please check your microphone.`)
           }
         }
 
         recognitionRef.current.onend = () => {
-          if (isListening) {
+          if (isListening && !demoMode) {
             try {
               recognitionRef.current?.start()
-            } catch (e) {
-              console.log("[v0] Auto-restart failed, user may have stopped")
-            }
+            } catch (e) {}
           }
         }
       } else {
@@ -125,7 +141,6 @@ export default function LiveCaptionsPage() {
         setError("Speech Recognition is not supported in your browser. Please use Chrome, Edge, or Safari.")
       }
     } catch (err) {
-      console.error("[v0] Error initializing speech recognition:", err)
       setError("Failed to initialize speech recognition")
     }
 
@@ -133,22 +148,65 @@ export default function LiveCaptionsPage() {
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort()
-        } catch (e) {
-          console.log("[v0] Error aborting recognition")
-        }
+        } catch (e) {}
+      }
+      if (demoRef.current) {
+        clearInterval(demoRef.current)
       }
     }
   }, [isListening])
 
+  const demoSamples = [
+    "Hello, today we're learning about photosynthesis",
+    "Plants convert sunlight into chemical energy",
+    "This process is essential for life on Earth",
+    "Let me explain the different stages",
+    "First, light is absorbed by chlorophyll",
+  ]
+
+  const startDemoMode = () => {
+    setDemoMode(true)
+    setIsListening(true)
+    setTranscript([])
+    setCurrentText("")
+    setError("")
+
+    let index = 0
+    if (demoRef.current) clearInterval(demoRef.current)
+
+    demoRef.current = setInterval(() => {
+      if (index < demoSamples.length) {
+        const timestamp = new Date().toLocaleTimeString()
+        setTranscript((prev) => [...prev, `[${timestamp}] ${demoSamples[index]}`])
+        index++
+      } else {
+        if (demoRef.current) clearInterval(demoRef.current)
+        setIsListening(false)
+      }
+    }, 2000)
+  }
+
   const toggleListening = () => {
-    if (!isSupported || !recognitionRef.current) return
+    if (!isSupported || !recognitionRef.current) {
+      setError("Speech recognition is not available. Please use Demo Mode to test the feature.")
+      return
+    }
+
+    if (permissionStatus === "denied") {
+      setError(
+        "Microphone access is denied by your browser. Please use Demo Mode to see how captions work, or update your browser permissions.",
+      )
+      return
+    }
 
     if (isListening) {
       try {
         recognitionRef.current.stop()
         setIsListening(false)
+        if (demoRef.current) clearInterval(demoRef.current)
+        setDemoMode(false)
       } catch (err) {
-        console.error("[v0] Error stopping recognition:", err)
+        setError("Cannot stop microphone")
       }
     } else {
       try {
@@ -158,8 +216,8 @@ export default function LiveCaptionsPage() {
         recognitionRef.current.start()
         setIsListening(true)
       } catch (err) {
-        console.error("[v0] Error starting recognition:", err)
-        setError("Failed to start speech recognition. Please check your microphone permissions.")
+        setError("Cannot start microphone. Permission may be denied. Use Demo Mode to see how captions work.")
+        setIsListening(false)
       }
     }
   }
@@ -167,6 +225,7 @@ export default function LiveCaptionsPage() {
   const clearTranscript = () => {
     setTranscript([])
     setCurrentText("")
+    if (demoRef.current) clearInterval(demoRef.current)
   }
 
   if (!user || user.role !== "student") {
@@ -193,7 +252,7 @@ export default function LiveCaptionsPage() {
               isListening ? "bg-green-500/20 text-green-500" : "bg-muted text-muted-foreground"
             }`}
           >
-            {isListening ? "Listening..." : "Paused"}
+            {isListening ? (demoMode ? "Demo Mode..." : "Listening...") : "Paused"}
           </div>
         </div>
       </header>
@@ -221,7 +280,9 @@ export default function LiveCaptionsPage() {
                 {transcript.length === 0 && !currentText && (
                   <p className="text-muted-foreground text-center py-8">
                     {isSupported
-                      ? 'Click "Start Listening" to begin capturing speech...'
+                      ? demoMode
+                        ? "Demo mode showing sample captions..."
+                        : 'Click "Start Listening" to begin capturing speech...'
                       : "Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari."}
                   </p>
                 )}
@@ -241,23 +302,26 @@ export default function LiveCaptionsPage() {
                 <CardTitle>Controls</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3">
                   <Button
                     onClick={toggleListening}
                     disabled={!isSupported}
-                    className={`flex-1 ${
-                      isListening ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"
-                    }`}
+                    className={`${isListening ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"}`}
                   >
                     {isListening ? "Stop Listening" : "Start Listening"}
                   </Button>
-                  <Button variant="outline" onClick={clearTranscript}>
-                    Clear
+                  <Button variant="outline" onClick={startDemoMode} disabled={isListening}>
+                    Demo Mode
+                  </Button>
+                  <Button variant="ghost" onClick={clearTranscript}>
+                    Clear Transcript
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   {isSupported
-                    ? "Speech recognition is available"
+                    ? permissionStatus === "denied"
+                      ? "Microphone access denied. Try Demo Mode or check browser permissions."
+                      : "Speech recognition is available"
                     : "Speech recognition is not supported in this browser"}
                 </p>
               </CardContent>

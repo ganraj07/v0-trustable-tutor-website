@@ -85,7 +85,25 @@ export interface TeacherProfile {
   religion: Religion
 }
 
-export type UserProfile = StudentProfile | TeacherProfile | null
+export interface SellerProfile {
+  id: string
+  name: string
+  email: string
+  phone: string
+  role: "seller"
+  businessName: string
+  address: string
+  city: string
+  state: string
+  pincode: string
+  bio: string
+  rating: number
+  totalReviews: number
+  verified: boolean
+  bankAccountVerified: boolean
+}
+
+export type UserProfile = StudentProfile | TeacherProfile | SellerProfile | null
 
 interface UserContextType {
   user: UserProfile

@@ -98,25 +98,9 @@ export default function AirDrawingPage() {
 
       const model = await handpose.load()
       modelRef.current = model
-
-      if (videoRef.current && canvasRef.current && overlayCanvasRef.current) {
-        const video = videoRef.current
-        const canvas = canvasRef.current
-        const overlayCanvas = overlayCanvasRef.current
-
-        canvas.width = video.videoWidth || 640
-        canvas.height = video.videoHeight || 480
-        overlayCanvas.width = video.videoWidth || 640
-        overlayCanvas.height = video.videoHeight || 480
-
-        setIsTracking(true)
-        detectHands()
-      }
-
       setLibraryLoading(false)
     } catch (error: any) {
-      console.error("[v0] Hand tracking error:", error)
-      setErrorMessage(error.message || "Failed to initialize hand tracking")
+      setErrorMessage(error?.message || "Failed to initialize hand tracking")
       setLibraryLoading(false)
     }
   }, [])

@@ -39,6 +39,18 @@ export function Navbar() {
             >
               For Teachers
             </Link>
+            <Link
+              href="/ngo-directory"
+              className="text-muted-foreground hover:text-primary transition-colors font-medium"
+            >
+              NGOs
+            </Link>
+            <Link
+              href="/marketplace"
+              className="text-muted-foreground hover:text-primary transition-colors font-medium"
+            >
+              Marketplace
+            </Link>
             <Link href="#about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
               About
             </Link>
@@ -63,7 +75,7 @@ export function Navbar() {
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12M6 12h16" />
               ) : (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               )}
@@ -92,6 +104,18 @@ export function Navbar() {
                 className="text-muted-foreground hover:text-primary transition-colors font-medium px-2 py-1"
               >
                 For Teachers
+              </Link>
+              <Link
+                href="/ngo-directory"
+                className="text-muted-foreground hover:text-primary transition-colors font-medium px-2 py-1"
+              >
+                NGOs
+              </Link>
+              <Link
+                href="/marketplace"
+                className="text-muted-foreground hover:text-primary transition-colors font-medium px-2 py-1"
+              >
+                Marketplace
               </Link>
               <Link
                 href="#about"

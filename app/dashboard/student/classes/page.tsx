@@ -21,9 +21,9 @@ export default function StudentClassesPage() {
   }
 
   const classes = [
-    { id: "1", subject: "Mathematics", time: "9:00 AM", teacher: "Ms. Johnson", students: 28 },
-    { id: "2", subject: "Science", time: "10:30 AM", teacher: "Mr. Smith", students: 32 },
-    { id: "3", subject: "English", time: "1:00 PM", teacher: "Ms. Davis", students: 25 },
+    { id: "1", subject: "Mathematics", time: "9:00 AM", teacher: "Ms. rohini", students: 28 },
+    { id: "2", subject: "Science", time: "10:30 AM", teacher: "Mr. omkar", students: 32 },
+    { id: "3", subject: "English", time: "1:00 PM", teacher: "Ms. ganraj", students: 25 },
   ]
 
   return (
