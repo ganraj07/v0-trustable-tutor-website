@@ -94,10 +94,10 @@ export default function StudentDashboard() {
     { icon: NotesIcon, label: "My Notes", color: "bg-secondary/10 text-secondary", href: "/dashboard/student/notes" },
     {
       icon: BrailleIcon,
-      label: "Braille Input",
+      label: "Braille Typing",
       color: "bg-indigo-100 text-indigo-600",
-      href: "/dashboard/student/braille-input",
-      description: "Type answers using Braille keyboard patterns",
+      href: "/dashboard/student/braille-typing",
+      description: "Modern braille typing interface using numpad",
     },
   ]
 
