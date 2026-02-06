@@ -92,6 +92,13 @@ export default function StudentDashboard() {
       href: "/dashboard/student/air-drawing",
     },
     { icon: NotesIcon, label: "My Notes", color: "bg-secondary/10 text-secondary", href: "/dashboard/student/notes" },
+    {
+      icon: BrailleIcon,
+      label: "Braille Input",
+      color: "bg-indigo-100 text-indigo-600",
+      href: "/dashboard/student/braille-input",
+      description: "Type answers using Braille keyboard patterns",
+    },
   ]
 
   const upcomingClasses = [
