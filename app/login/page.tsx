@@ -82,17 +82,6 @@ const LANGUAGE_OPTIONS: { value: Language; label: string; flag: string }[] = [
   { value: "italian", label: "Italian", flag: "IT" },
 ]
 
-const RELIGION_OPTIONS: { value: Religion; label: string }[] = [
-  { value: "prefer_not_to_say", label: "Prefer not to say" },
-  { value: "christianity", label: "Christianity" },
-  { value: "islam", label: "Islam" },
-  { value: "hinduism", label: "Hinduism" },
-  { value: "buddhism", label: "Buddhism" },
-  { value: "judaism", label: "Judaism" },
-  { value: "sikhism", label: "Sikhism" },
-  { value: "other", label: "Other" },
-  { value: "none", label: "No religion" },
-]
 
 function LoginForm() {
   const searchParams = useSearchParams()
